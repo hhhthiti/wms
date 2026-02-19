@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Expedição</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<h2>🚚 Expedição</h2>
+
+SKU <input id="sku"><br><br>
+
+Tipo
+<select id="tipo">
+  <option value="PALETE">Paletes</option>
+  <option value="FARDO">Fardos</option>
+</select><br><br>
+
+Quantidade <input id="qtd" type="number"><br><br>
+
+<button onclick="saida()">Confirmar Saída</button>
+<p id="msg"></p>
+
+<script>
+const supabase = supabase.createClient('URL','KEY')
+
+async function saida() {
+  const sku = skuInput.value
+  const tipo = tipoInput.value
+  const qtd = Number(qtdInput.value)
+
+  const { data: prod } = await supabase
+    .from('produtos')
+    .select('fardos_por_palete')
+    .eq('sku', sku)
+    .single()
+
+  const paletes = tipo === 'PALETE'
+    ? qtd
+    : Math.ceil(qtd / prod.fardos_por_palete)
+
+  await supabase.from('movimentacoes').insert({
+    sku,
+    tipo: 'SAIDA',
+    paletes
+  })
+
+  msg.innerText = `Saída registrada: ${paletes} paletes`
+}
+
+const skuInput = document.getElementById('sku')
+const tipoInput = document.getElementById('tipo')
+const qtdInput = document.getElementById('qtd')
+const msg = document.getElementById('msg')
+</script>
+</body>
+</html>

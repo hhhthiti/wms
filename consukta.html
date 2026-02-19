@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Consulta de Estoque</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<h2>📊 Estoque Atual</h2>
+
+<table border="1">
+<tr><th>SKU</th><th>Paletes</th><th>Fardos</th></tr>
+<tbody id="tabela"></tbody>
+</table>
+
+<script>
+const supabase = supabase.createClient('URL','KEY')
+
+async function carregar() {
+  const { data } = await supabase
+    .from('estoque_atual')
+    .select('*')
+
+  let html = ''
+  data.forEach(i => {
+    html += `<tr>
+      <td>${i.sku}</td>
+      <td>${i.paletes}</td>
+      <td>${i.fardos}</td>
+    </tr>`
+  })
+
+  tabela.innerHTML = html
+}
+
+const tabela = document.getElementById('tabela')
+carregar()
+</script>
+</body>
+</html>
