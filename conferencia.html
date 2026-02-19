@@ -2,208 +2,53 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Conferência de Paletes por Área</title>
-
+<title>Conferência de Área</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<style>
-/* (seu CSS original – mantido) */
-.ajuda-box {
-  background: #fff3cd;
-  border: 1px solid #ffeeba;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  display: none;
-}
-.ajuda-box h3 { margin-top: 0; color: #856404; }
-.btn-ajuda { background: #ffc107; color: #000; margin-left: 10px; }
-body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
-h2 { color: #d32f2f; }
-.area {
-  background: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 5px rgba(0,0,0,.1);
-}
-.area-header { display: flex; gap: 10px; margin-bottom: 10px; }
-.area-header input { padding: 6px; }
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-button {
-  padding: 6px 12px;
-  cursor: pointer;
-  border: none;
-  background: #1976d2;
-  color: white;
-  border-radius: 4px;
-}
-button:hover { opacity: 0.85; }
-.resumo {
-  background: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-</style>
 </head>
 
 <body>
+<h2>📦 Conferência de Área</h2>
 
-<h2>📦 Conferência de Paletes por Área</h2>
+Área <input id="area"><br><br>
+SKU <input id="sku"><br><br>
+Quantidade atual <input id="qtd" type="number"><br><br>
 
-<button class="btn-ajuda" onclick="toggleAjuda()">❓ Ajuda</button>
-
-<div id="ajuda" class="ajuda-box">
-  <h3>📘 Como usar</h3>
-  <ol>
-    <li>Adicione a área (ex: A01)</li>
-    <li>Informe os SKUs e paletes que EXISTEM fisicamente</li>
-    <li>Os valores irão SOBREPÔR o estoque anterior</li>
-    <li>Use esta tela apenas para conferência</li>
-  </ol>
-</div>
-
-<button onclick="adicionarArea()">➕ Adicionar Área</button>
-<button onclick="salvarNoBanco()">💾 Confirmar Conferência</button>
-
-<div id="areas"></div>
-
-<div class="resumo">
-  <h3>📊 Resumo</h3>
-  <div id="resumo"></div>
-  <button onclick="exportarExcel()">📥 Exportar Excel</button>
-</div>
+<button onclick="confirmar()">Confirmar / Atualizar</button>
+<p id="msg"></p>
 
 <script>
-// 🔐 CONFIGURAÇÃO SUPABASE
-const supabase = supabase.createClient(
-  'SUA_SUPABASE_URL',
-  'SUA_SUPABASE_ANON_KEY'
+const supabase = window.supabase.createClient(
+  'https://qfjghplxbtogshfjkawx.supabase.co',
+  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA'
 )
 
-// UI
-function toggleAjuda() {
-  const ajuda = document.getElementById('ajuda')
-  ajuda.style.display = ajuda.style.display === 'none' ? 'block' : 'none'
-}
+async function confirmar() {
+  const area = document.getElementById('area').value
+  const sku = document.getElementById('sku').value
+  const qtd = Number(document.getElementById('qtd').value)
 
-let areas = []
+  const { data: existente } = await supabase
+    .from('estoque')
+    .select('id')
+    .eq('area', area)
+    .eq('sku', sku)
+    .single()
 
-function adicionarArea() {
-  areas.push({ nome:'', capacidade:0, itens:[] })
-  render()
-}
+  if (existente) {
+    await supabase
+      .from('estoque')
+      .update({ quantidade: qtd })
+      .eq('id', existente.id)
 
-function adicionarItem(areaIndex) {
-  areas[areaIndex].itens.push({ sku:'', qtd:0 })
-  render()
-}
-
-function atualizar(areaIndex, tipo, itemIndex, campo, valor) {
-  if (tipo === 'area') areas[areaIndex][campo] = valor
-  else areas[areaIndex].itens[itemIndex][campo] = valor
-  renderResumo()
-}
-
-function render() {
-  const div = document.getElementById('areas')
-  div.innerHTML = ''
-
-  areas.forEach((area, aIdx) => {
-    const totalArea = area.itens.reduce((s,i)=>s+Number(i.qtd||0),0)
-
-    div.innerHTML += `
-      <div class="area">
-        <div class="area-header">
-          <input placeholder="Área (A01)"
-            onchange="atualizar(${aIdx},'area',0,'nome',this.value)">
-          <input type="number" placeholder="Capacidade"
-            onchange="atualizar(${aIdx},'area',0,'capacidade',this.value)">
-          <b>${totalArea}/${area.capacidade || 0}</b>
-        </div>
-
-        <table>
-          <tr><th>SKU</th><th>Paletes</th></tr>
-          ${area.itens.map((i,iIdx)=>`
-            <tr>
-              <td><input onchange="atualizar(${aIdx},'item',${iIdx},'sku',this.value)"></td>
-              <td><input type="number" onchange="atualizar(${aIdx},'item',${iIdx},'qtd',this.value)"></td>
-            </tr>
-          `).join('')}
-        </table>
-
-        <button onclick="adicionarItem(${aIdx})">➕ Adicionar SKU</button>
-      </div>
-    `
-  })
-
-  renderResumo()
-}
-
-function renderResumo() {
-  let total = 0
-  let porSku = {}
-
-  areas.forEach(a=>{
-    a.itens.forEach(i=>{
-      total += Number(i.qtd||0)
-      porSku[i.sku] = (porSku[i.sku]||0) + Number(i.qtd||0)
-    })
-  })
-
-  let html = `<b>Total Geral:</b> ${total} paletes<br><br>`
-  html += `<table><tr><th>SKU</th><th>Total</th></tr>`
-  for (let sku in porSku) {
-    html += `<tr><td>${sku}</td><td>${porSku[sku]}</td></tr>`
-  }
-  html += `</table>`
-
-  document.getElementById('resumo').innerHTML = html
-}
-
-// 💾 SALVAR NO BANCO (UPSERT)
-async function salvarNoBanco() {
-  let registros = []
-
-  areas.forEach(area=>{
-    area.itens.forEach(i=>{
-      registros.push({
-        area: area.nome,
-        sku: i.sku,
-        paletes: Number(i.qtd)
-      })
-    })
-  })
-
-  const { error } = await supabase
-    .from('estoque_area')
-    .upsert(registros)
-
-  if (error) {
-    alert('Erro ao salvar')
-    console.error(error)
+    msg.innerText = 'Quantidade atualizada com sucesso'
   } else {
-    alert('Conferência salva com sucesso')
-  }
-}
+    await supabase
+      .from('estoque')
+      .insert({ area, sku, quantidade: qtd })
 
-// 📥 EXCEL
-function exportarExcel() {
-  let linhas = [['Área','SKU','Paletes']]
-  areas.forEach(a=>{
-    a.itens.forEach(i=>{
-      linhas.push([a.nome, i.sku, i.qtd])
-    })
-  })
-  const wb = XLSX.utils.book_new()
-  const ws = XLSX.utils.aoa_to_sheet(linhas)
-  XLSX.utils.book_append_sheet(wb, ws, 'Conferência')
-  XLSX.writeFile(wb, 'Conferencia_Estoque.xlsx')
+    msg.innerText = 'SKU inserido na área'
+  }
 }
 </script>
-
 </body>
 </html>
