@@ -9,16 +9,18 @@
 <script>
 const supabase = window.supabase.createClient(
   "https://qfjghplxbtogshfjkawx.supabase.co",
-  "SUA_CHAVE_AQUI"
+  "sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA"
 );
 
 async function confirmar() {
+
   const area = document.getElementById("area").value;
   const sku = Number(document.getElementById("sku").value);
+  const tipo = document.getElementById("tipo").value;
   const paletes = Number(document.getElementById("paletes").value);
   const msg = document.getElementById("msg");
 
-  if (!area || !sku || !paletes) {
+  if (!area || !sku || !tipo || !paletes) {
     msg.innerText = "Preencha todos os campos";
     return;
   }
@@ -28,24 +30,29 @@ async function confirmar() {
     .select("paletes")
     .eq("area", area)
     .eq("sku", sku)
+    .eq("tipo", tipo)
     .single();
 
   if (existente) {
+
     await supabase
       .from("estoque_area")
       .update({ paletes: existente.paletes + paletes })
       .eq("area", area)
-      .eq("sku", sku);
+      .eq("sku", sku)
+      .eq("tipo", tipo);
 
     msg.innerText = "Estoque atualizado!";
   } else {
+
     await supabase
       .from("estoque_area")
-      .insert({ area, sku, paletes });
+      .insert({ area, sku, tipo, paletes });
 
-    msg.innerText = "SKU inserido na área!";
+    msg.innerText = "Novo SKU inserido!";
   }
 }
+
 </script>
 </head>
 
@@ -55,9 +62,16 @@ async function confirmar() {
 Área <input id="area"><br><br>
 SKU <input id="sku" type="number"><br><br>
 Paletes <input id="paletes" type="number"><br><br>
+  Tipo
+<select id="tipo">
+  <option value="PL2">PL2</option>
+  <option value="PBR">PBR</option>
+</select>
+
 
 <button onclick="confirmar()">Confirmar</button>
 <p id="msg"></p>
 
 </body>
 </html>
+
