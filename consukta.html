@@ -4,14 +4,41 @@
 <meta charset="UTF-8">
 <title>Consulta de Estoque</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  padding: 20px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+th, td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+th {
+  background: #1976d2;
+  color: #fff;
+}
+button {
+  padding: 8px 14px;
+  margin-bottom: 10px;
+}
+</style>
 </head>
 
 <body>
+
 <h2>🔍 Consulta de Estoque</h2>
 
-<button onclick="consultar()">Atualizar</button>
+<button onclick="consultar()">🔄 Atualizar</button>
 
-<table border="1" cellpadding="6">
+<table>
 <thead>
 <tr>
   <th>Área</th>
@@ -25,17 +52,25 @@
 <script>
 const supabase = window.supabase.createClient(
   'https://qfjghplxbtogshfjkawx.supabase.co',
-  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA'
+  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA',
+  {
+    auth: { persistSession: false }
+  }
 )
 
 async function consultar() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque')
     .select('*')
     .order('area')
 
   const tbody = document.getElementById('tabela')
   tbody.innerHTML = ''
+
+  if (error) {
+    tbody.innerHTML = '<tr><td colspan="3">Erro ao carregar</td></tr>'
+    return
+  }
 
   data.forEach(l => {
     tbody.innerHTML += `
@@ -49,5 +84,6 @@ async function consultar() {
 
 consultar()
 </script>
+
 </body>
 </html>
