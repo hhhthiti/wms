@@ -1,58 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<title>Expedição</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="utf-8">
+  <title>Expedição</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 <h2>🚚 Expedição</h2>
 
-SKU <input id="sku"><br><br>
+<label>
+  SKU<br>
+  <input id="sku">
+</label>
+<br><br>
 
-Tipo
-<select id="tipo">
-  <option value="PALETE">Paletes</option>
-  <option value="FARDO">Fardos</option>
-</select><br><br>
+<label>
+  Tipo de Unidade<br>
+  <select id="tipo">
+    <option value="PL2">PL2</option>
+    <option value="PBR">PBR</option>
+    <option value="FARDO">Fardo</option>
+  </select>
+</label>
+<br><br>
 
-Quantidade <input id="qtd" type="number"><br><br>
+<label>
+  Quantidade<br>
+  <input id="qtd" type="number" min="1">
+</label>
+<br><br>
 
 <button onclick="saida()">Confirmar Saída</button>
+
 <p id="msg"></p>
 
 <script>
-const supabase = supabase.createClient('URL','KEY')
+const supabase = supabase.createClient(
+  'URL',
+  'KEY'
+)
+
+const skuInput  = document.getElementById('sku')
+const tipoInput = document.getElementById('tipo')
+const qtdInput  = document.getElementById('qtd')
+const msg       = document.getElementById('msg')
 
 async function saida() {
-  const sku = skuInput.value
+  const sku  = skuInput.value.trim()
   const tipo = tipoInput.value
-  const qtd = Number(qtdInput.value)
+  const qtd  = Number(qtdInput.value)
 
-  const { data: prod } = await supabase
-    .from('produtos')
-    .select('fardos_por_palete')
-    .eq('sku', sku)
-    .single()
+  if (!sku || !qtd || qtd <= 0) {
+    msg.innerText = 'Preencha todos os campos corretamente'
+    return
+  }
 
-  const paletes = tipo === 'PALETE'
-    ? qtd
-    : Math.ceil(qtd / prod.fardos_por_palete)
+  const { error } = await supabase
+    .from('movimentacoes')
+    .insert({
+      sku: sku,
+      tipo_movimentacao: 'SAIDA',
+      unidade: tipo,        // PL2 | PBR | FARDO
+      quantidade: qtd,
+      data: new Date()
+    })
 
-  await supabase.from('movimentacoes').insert({
-    sku,
-    tipo: 'SAIDA',
-    paletes
-  })
-
-  msg.innerText = `Saída registrada: ${paletes} paletes`
+  if (error) {
+    msg.innerText = 'Erro ao registrar saída'
+    console.error(error)
+  } else {
+    msg.innerText = `Saída registrada: ${qtd} ${tipo}`
+    skuInput.value = ''
+    qtdInput.value = ''
+  }
 }
-
-const skuInput = document.getElementById('sku')
-const tipoInput = document.getElementById('tipo')
-const qtdInput = document.getElementById('qtd')
-const msg = document.getElementById('msg')
 </script>
+
 </body>
 </html>
