@@ -4,51 +4,107 @@
 <meta charset="UTF-8">
 <title>Conferência de Área</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  padding: 20px;
+}
+.card {
+  background: #fff;
+  padding: 20px;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+input, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+}
+button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+.sucesso { color: green; font-weight: bold; }
+.erro { color: red; font-weight: bold; }
+</style>
 </head>
 
 <body>
+
 <h2>📦 Conferência de Área</h2>
 
-Área <input id="area"><br><br>
-SKU <input id="sku"><br><br>
-Quantidade atual <input id="qtd" type="number"><br><br>
+<div class="card">
+  Área
+  <input id="area" placeholder="Ex: A01">
 
-<button onclick="confirmar()">Confirmar / Atualizar</button>
-<p id="msg"></p>
+  SKU
+  <input id="sku">
+
+  Quantidade
+  <input id="qtd" type="number" min="0">
+
+  <button onclick="confirmar()">Confirmar / Atualizar</button>
+  <p id="msg"></p>
+</div>
 
 <script>
 const supabase = window.supabase.createClient(
   'https://qfjghplxbtogshfjkawx.supabase.co',
-  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA'
+  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA',
+  {
+    auth: { persistSession: false }
+  }
 )
 
+const msg = document.getElementById('msg')
+
 async function confirmar() {
-  const area = document.getElementById('area').value
-  const sku = document.getElementById('sku').value
-  const qtd = Number(document.getElementById('qtd').value)
+  msg.innerText = 'Processando...'
+  msg.className = ''
 
-  const { data: existente } = await supabase
-    .from('estoque')
-    .select('id')
-    .eq('area', area)
-    .eq('sku', sku)
-    .single()
+  try {
+    const area = document.getElementById('area').value.trim()
+    const sku  = document.getElementById('sku').value.trim()
+    const qtd  = Number(document.getElementById('qtd').value)
 
-  if (existente) {
-    await supabase
+    if (!area || !sku || qtd < 0) {
+      throw 'Preencha todos os campos corretamente'
+    }
+
+    const { data: existente } = await supabase
       .from('estoque')
-      .update({ quantidade: qtd })
-      .eq('id', existente.id)
+      .select('id')
+      .eq('area', area)
+      .eq('sku', sku)
+      .single()
 
-    msg.innerText = 'Quantidade atualizada com sucesso'
-  } else {
-    await supabase
-      .from('estoque')
-      .insert({ area, sku, quantidade: qtd })
+    if (existente) {
+      await supabase
+        .from('estoque')
+        .update({ quantidade: qtd })
+        .eq('id', existente.id)
 
-    msg.innerText = 'SKU inserido na área'
+      msg.innerText = '✅ Quantidade atualizada com sucesso'
+    } else {
+      await supabase
+        .from('estoque')
+        .insert({ area, sku, quantidade: qtd })
+
+      msg.innerText = '✅ Produto cadastrado na área'
+    }
+
+    msg.className = 'sucesso'
+  } catch (e) {
+    msg.innerText = '❌ ' + e
+    msg.className = 'erro'
   }
 }
 </script>
+
 </body>
 </html>
