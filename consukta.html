@@ -1,41 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <title>Consulta de Estoque</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
-<h2>📊 Estoque Atual</h2>
+<h2>🔍 Consulta de Estoque</h2>
 
-<table border="1">
-<tr><th>SKU</th><th>Paletes</th><th>Fardos</th></tr>
+<button onclick="consultar()">Atualizar</button>
+
+<table border="1" cellpadding="6">
+<thead>
+<tr>
+  <th>Área</th>
+  <th>SKU</th>
+  <th>Quantidade</th>
+</tr>
+</thead>
 <tbody id="tabela"></tbody>
 </table>
 
 <script>
-const supabase = supabase.createClient('URL','KEY')
+const supabase = window.supabase.createClient(
+  'https://qfjghplxbtogshfjkawx.supabase.co',
+  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA'
+)
 
-async function carregar() {
+async function consultar() {
   const { data } = await supabase
-    .from('estoque_atual')
+    .from('estoque')
     .select('*')
+    .order('area')
 
-  let html = ''
-  data.forEach(i => {
-    html += `<tr>
-      <td>${i.sku}</td>
-      <td>${i.paletes}</td>
-      <td>${i.fardos}</td>
-    </tr>`
+  const tbody = document.getElementById('tabela')
+  tbody.innerHTML = ''
+
+  data.forEach(l => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${l.area}</td>
+        <td>${l.sku}</td>
+        <td>${l.quantidade}</td>
+      </tr>`
   })
-
-  tabela.innerHTML = html
 }
 
-const tabela = document.getElementById('tabela')
-carregar()
+consultar()
 </script>
 </body>
 </html>
