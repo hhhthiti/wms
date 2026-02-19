@@ -36,10 +36,12 @@
 <p id="msg"></p>
 
 <script>
-const supabase = supabase.createClient(
-  'URL',
-  'KEY'
+const supabase = window.supabase.createClient(
+  'https://qfjghplxbtogshfjkawx.supabase.co',
+  'sb_publishable_rIcKdaflOvJ0DLTJDcOrxA_bpTGG2hA'
 )
+</script>
+
 
 const skuInput  = document.getElementById('sku')
 const tipoInput = document.getElementById('tipo')
@@ -79,3 +81,4 @@ async function saida() {
 
 </body>
 </html>
+
