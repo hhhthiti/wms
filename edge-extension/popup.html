@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>WMS PDF Autofill</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; width: 320px; }
+    h1 { font-size: 16px; margin: 0 0 10px; }
+    input, button { width: 100%; margin: 8px 0; }
+    .status { font-size: 12px; color: #333; white-space: pre-line; }
+    button { padding: 8px; border: 0; background: #1976d2; color: white; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Dados do Transporte via PDF</h1>
+  <input id="pdfInput" type="file" accept="application/pdf" />
+  <button id="processBtn">Extrair e preencher</button>
+  <div id="status" class="status">Selecione um PDF para começar.</div>
+  <script src="popup.js"></script>
+</body>
+</html>
