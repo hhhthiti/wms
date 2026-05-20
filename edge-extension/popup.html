@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de Portaria</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="portaria-container">
+    <div class="portaria-header">
+      <h1>Registro de Portaria</h1>
+      <p>Extensão Edge • Controle de entrada e saída</p>
+    </div>
+
+    <form class="portaria-form" id="portariaForm">
+      <div class="form-group">
+        <label>Transportadora</label>
+        <input type="text" name="transportadora" placeholder="Digite conforme documento" />
+      </div>
+
+      <div class="form-group">
+        <label>Nome do Motorista</label>
+        <input type="text" name="motorista" />
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Placa</label>
+          <input type="text" name="placa1" />
+        </div>
+
+        <div class="form-group">
+          <label>Placa 2</label>
+          <input type="text" name="placa2" />
+        </div>
+
+        <div class="form-group">
+          <label>Placa 3</label>
+          <input type="text" name="placa3" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tipo de Veículo</label>
+        <select name="tipo_veiculo">
+          <option value="">Selecione...</option>
+          <option>TRUCK BAU</option>
+          <option>TRUCK BAU 76 m³</option>
+          <option>TRUCK SIDER</option>
+          <option>CARRETA</option>
+          <option>BITREM</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea name="observacoes" rows="5"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-primary" id="fillPdf">Preencher do PDF</button>
+        <button type="reset" class="btn-secondary">Limpar</button>
+      </div>
+      <p id="status"></p>
+    </form>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
