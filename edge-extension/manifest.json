@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "WMS Registro de Portaria",
+  "version": "1.0.0",
+  "description": "Extensão para Edge com formulário de Registro de Portaria.",
+  "action": {
+    "default_title": "Registro de Portaria",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage"
+  ]
+}
