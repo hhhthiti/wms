@@ -1,6 +1,12 @@
 const statusEl = document.getElementById('status');
 const fileInput = document.getElementById('pdfInput');
 
+const DEFAULTS = {
+  sapPortaria: '1111111',
+  tipoVeiculo: 'CARRETA BAU',
+  cnh: '1'
+};
+
 document.getElementById('processBtn').addEventListener('click', async () => {
   const file = fileInput.files?.[0];
   if (!file) {
@@ -37,73 +43,118 @@ function extractByRegex(text, regex) {
   return match?.[1]?.trim() || '';
 }
 
+function normalizePlate(value) {
+  if (!value) return '';
+  return value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+}
+
 function extractTransportData(text) {
+  const transportadora = extractByRegex(text, /\b(?:Transportadora|Cond[oô]mino)\b\s*:?[\s\r\n]*([A-Z0-9 .&\-/]{2,})/i);
+  const motorista = extractByRegex(text, /\b(?:Motorista\s*\/\s*Visitante\s*\/\s*Respons[aá]vel|Motorista)\b[\s\S]{0,120}?\n\s*([A-ZÀ-Ú' ]{5,})\s+[0-9]{1,2}[\.,]/i)
+    || extractByRegex(text, /\bJSL\b[\s\r\n]+([A-ZÀ-Ú' ]{5,})\s+[0-9]/i);
+
+  const dt = extractByRegex(text, /DT\s*[:\-]\s*([0-9]{6,})/i);
+  const cpf = extractByRegex(text, /CPF\s*[:\-]\s*([0-9.\-]{11,14})/i);
+  const telefone = extractByRegex(text, /\(([0-9]{2})\)\s*([0-9]{4,5}\-?[0-9]{4})/i).replace(/\s+/g, ' ');
+
+  const plateMatches = Array.from(text.matchAll(/\b([A-Z]{3}[\-\s]?[0-9][A-Z0-9][0-9]{2})\b/g))
+    .map((m) => normalizePlate(m[1]));
+
+  const uniquePlates = [...new Set(plateMatches)].filter(Boolean);
+
   return {
-    transportadora: extractByRegex(text, /Transportadora\s*:?\s*([^\n\r]+)/i),
-    motorista: extractByRegex(text, /Nome\s+do\s+Motorista\s*:?\s*([^\n\r]+)/i),
-    placa: extractByRegex(text, /Placa\s*:?\s*([A-Z0-9-]{7,10})/i),
-    placa2: extractByRegex(text, /Placa\s*2\s*:?\s*([A-Z0-9-]{7,10})/i),
-    placa3: extractByRegex(text, /Placa\s*3\s*:?\s*([A-Z0-9-]{7,10})/i),
-    tipoVeiculo: extractByRegex(text, /Tipo\s+de\s+Ve[ií]culo\s*:?\s*([^\n\r]+)/i),
-    telefone: extractByRegex(text, /Telefone\s*:?\s*([^\n\r]+)/i),
-    cnh: extractByRegex(text, /N[º°o]?\s*da\s*CNH\s*:?\s*([^\n\r]+)/i),
-    cpf: extractByRegex(text, /CPF\s*:?\s*([0-9.\/-]+)/i)
+    sapPortaria: DEFAULTS.sapPortaria,
+    numeroDt: dt,
+    transportadora,
+    motorista,
+    placa: uniquePlates[0] || '',
+    placa2: uniquePlates[1] || '',
+    placa3: uniquePlates[2] || '',
+    tipoVeiculo: DEFAULTS.tipoVeiculo,
+    telefone,
+    cnh: DEFAULTS.cnh,
+    cpf
   };
 }
 
 function fillFormFields(data) {
-  const mapping = [
-    { keys: ['transportadora'], labels: ['Transportadora'] },
-    { keys: ['motorista'], labels: ['Nome do Motorista'] },
-    { keys: ['placa'], labels: ['Placa'] },
-    { keys: ['placa2'], labels: ['Placa 2'] },
-    { keys: ['placa3'], labels: ['Placa 3'] },
-    { keys: ['telefone'], labels: ['Telefone'] },
-    { keys: ['cnh'], labels: ['CNH'] },
-    { keys: ['cpf'], labels: ['CPF'] }
-  ];
-
-  function findInputByLabel(labelText) {
-    const labels = Array.from(document.querySelectorAll('label'));
-    const label = labels.find((l) => l.textContent?.trim().toLowerCase().includes(labelText.toLowerCase()));
-    if (label?.htmlFor) {
-      return document.getElementById(label.htmlFor);
-    }
-    return label?.querySelector('input,select,textarea') || null;
+  function normalizeText(str) {
+    return (str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
-  mapping.forEach(({ keys, labels }) => {
-    const value = data[keys[0]];
-    if (!value) return;
+  function findElementByLabel(labelHints) {
+    const hints = labelHints.map(normalizeText);
+    const labels = Array.from(document.querySelectorAll('label'));
 
-    for (const labelName of labels) {
-      const el = findInputByLabel(labelName);
-      if (el) {
-        el.value = value;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        break;
+    for (const label of labels) {
+      const labelText = normalizeText(label.textContent);
+      if (!hints.some((h) => labelText.includes(h))) continue;
+
+      if (label.htmlFor) {
+        const target = document.getElementById(label.htmlFor);
+        if (target) return target;
       }
+
+      const nested = label.querySelector('input,select,textarea');
+      if (nested) return nested;
+    }
+
+    const fields = Array.from(document.querySelectorAll('input,select,textarea'));
+    return fields.find((el) => {
+      const id = normalizeText(el.id);
+      const name = normalizeText(el.name);
+      const placeholder = normalizeText(el.getAttribute('placeholder') || '');
+      const aria = normalizeText(el.getAttribute('aria-label') || '');
+      return hints.some((h) => id.includes(h) || name.includes(h) || placeholder.includes(h) || aria.includes(h));
+    }) || null;
+  }
+
+  function setFieldValue(el, value) {
+    if (!el || !value) return;
+    el.focus();
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.blur();
+  }
+
+  const addDocumentButton = Array.from(document.querySelectorAll('button,[role="button"],a')).find((el) =>
+    normalizeText(el.textContent).includes('adicionar documento')
+  );
+  if (addDocumentButton) addDocumentButton.click();
+
+  const mapping = [
+    { value: data.sapPortaria, hints: ['nº sap de portaria', 'sap de portaria', 'sap portaria'] },
+    { value: data.numeroDt, hints: ['numero do dt', 'número do dt', 'documentos de transporte', 'dt'] },
+    { value: data.transportadora, hints: ['transportadora'] },
+    { value: data.motorista, hints: ['nome do motorista', 'motorista'] },
+    { value: data.placa, hints: ['placa'] },
+    { value: data.placa2, hints: ['placa 2', 'placa2'] },
+    { value: data.placa3, hints: ['placa 3', 'placa3'] },
+    { value: data.telefone, hints: ['telefone', 'contato'] },
+    { value: data.cnh, hints: ['nº da cnh', 'numero da cnh', 'cnh'] },
+    { value: data.cpf, hints: ['cpf'] }
+  ];
+
+  mapping.forEach(({ value, hints }) => {
+    const field = findElementByLabel(hints);
+    if (field && field.tagName !== 'SELECT') {
+      setFieldValue(field, value);
     }
   });
 
-  // Tipo de veículo (select)
-  if (data.tipoVeiculo) {
-    const selects = Array.from(document.querySelectorAll('select'));
-    const select = selects.find((s) => {
-      const idMatch = (s.id || '').toLowerCase().includes('veiculo');
-      const nameMatch = (s.name || '').toLowerCase().includes('veiculo');
-      return idMatch || nameMatch;
-    });
-
-    if (select) {
-      const option = Array.from(select.options).find((opt) =>
-        opt.textContent.toLowerCase().includes(data.tipoVeiculo.toLowerCase())
-      );
-      if (option) {
-        select.value = option.value;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+  const tipoVeiculoSelect = findElementByLabel(['tipo de veiculo', 'tipo veículo']);
+  if (tipoVeiculoSelect?.tagName === 'SELECT') {
+    const option = Array.from(tipoVeiculoSelect.options).find((opt) =>
+      normalizeText(opt.textContent).includes(normalizeText(data.tipoVeiculo))
+    );
+    if (option) {
+      tipoVeiculoSelect.value = option.value;
+      tipoVeiculoSelect.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }
 }
