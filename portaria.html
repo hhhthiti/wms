@@ -12,7 +12,7 @@
       border-radius:18px;
       padding:32px;
       box-shadow:0 10px 30px rgba(0,0,0,.08);
-      font-family:Inter,Arial,sans-serif;
+      font-family:Inter,sans-serif;
     }
 
     .portaria-header{ margin-bottom:28px; }
@@ -22,6 +22,7 @@
     .portaria-form{ display:flex; flex-direction:column; gap:20px; }
 
     .form-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+
     .form-group{ display:flex; flex-direction:column; gap:8px; }
 
     .form-group label{ font-weight:700; color:#334155; }
@@ -46,8 +47,9 @@
 
     .form-actions{ display:flex; gap:12px; margin-top:10px; }
 
-    .btn-primary,
-    .btn-secondary{
+    .btn-primary{
+      background:#2563eb;
+      color:#fff;
       border:none;
       border-radius:12px;
       padding:12px 22px;
@@ -55,14 +57,14 @@
       cursor:pointer;
     }
 
-    .btn-primary{ background:#2563eb; color:#fff; }
-    .btn-secondary{ background:#e2e8f0; color:#0f172a; }
-
-    .destaque-dt {
-      background: #eff6ff;
-      border: 2px solid #93c5fd;
-      padding: 16px;
-      border-radius: 12px;
+    .btn-secondary{
+      background:#e2e8f0;
+      color:#0f172a;
+      border:none;
+      border-radius:12px;
+      padding:12px 22px;
+      font-weight:700;
+      cursor:pointer;
     }
 
     @media(max-width:768px){
@@ -79,50 +81,30 @@
     </div>
 
     <form class="portaria-form">
-      <div class="form-group destaque-dt">
-        <label>DT (conforme PDF)</label>
-        <input type="text" name="dt" value="23258415" />
-      </div>
-
-      <div class="form-group">
-        <label>Número da autorização</label>
-        <input type="text" name="numero" value="052025" />
-      </div>
-
       <div class="form-group">
         <label>Transportadora</label>
-        <input type="text" name="transportadora" value="JOALERIA TRANSPORTES" placeholder="Digite conforme documento" />
+        <input type="text" name="transportadora" value="JOALERIA TRANSPORTES" placeholder="Digite conforme documento">
       </div>
 
       <div class="form-group">
         <label>Nome do Motorista</label>
-        <input type="text" name="motorista" value="VAGNER RODRIGUES DOS SANTOS" />
-      </div>
-
-      <div class="form-group">
-        <label>CPF</label>
-        <input type="text" name="cpf" value="301863388/13" />
-      </div>
-
-      <div class="form-group">
-        <label>Contato</label>
-        <input type="text" name="contato" value="(11)91055-6767" />
+        <input type="text" name="motorista" value="VAGNER RODRIGUES DOS SANTOS">
       </div>
 
       <div class="form-grid">
         <div class="form-group">
           <label>Placa</label>
-          <input type="text" name="placa1" value="EZU-4743" />
+          <input type="text" name="placa1" value="EZU-4743">
         </div>
 
         <div class="form-group">
-          <label>Placa 2 (Carreta)</label>
-          <input type="text" name="placa2" value="EOE-9685" />
+          <label>Placa 2</label>
+          <input type="text" name="placa2" value="EOE-9685">
         </div>
 
         <div class="form-group">
-          <label>Placa 3 (Bitrem)</label>
-          <input type="text" name="placa3" value="" />
+          <label>Placa 3</label>
+          <input type="text" name="placa3" value="">
         </div>
       </div>
 
@@ -140,33 +122,16 @@
       </div>
 
       <div class="form-group">
-        <label>Condômino / Cliente</label>
-        <input type="text" name="cliente" value="SUZANO PAPEL E CELULOSE" />
-      </div>
-
-      <div class="form-group">
-        <label>Operação</label>
-        <input type="text" name="operacao" value="CARGA" />
-      </div>
-
-      <div class="form-group">
-        <label>Data Entrada / Início</label>
-        <input type="text" name="data_entrada" value="19/05/2026 19:58:00" />
-      </div>
-
-      <div class="form-group">
-        <label>Responsável (Porteiro)</label>
-        <input type="text" name="porteiro" value="MARCOS" />
-      </div>
-
-      <div class="form-group">
-        <label>Documento (RG)</label>
-        <input type="text" name="rg" value="41.823.143-X" />
-      </div>
-
-      <div class="form-group">
         <label>Observações</label>
-        <textarea name="observacoes" rows="4">Autorização de entrada/serviço preenchida com dados do PDF.</textarea>
+        <textarea name="observacoes" rows="6">DT: 23258415
+Número: 052025
+Operação: CARGA
+Condômino/Cliente: SUZANO PAPEL E CELULOSE
+Data Entrada/Início: 19/05/2026 19:58:00
+CPF: 301863388/13
+Contato: (11)91055-6767
+Responsável/Porteiro: MARCOS
+RG: 41.823.143-X</textarea>
       </div>
 
       <div class="form-actions">
