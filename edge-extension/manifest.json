@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "WMS PDF Autofill",
+  "description": "Extrai dados de transporte de um PDF e preenche automaticamente o formulário no site WMS.",
+  "version": "0.1.0",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "WMS PDF Autofill",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": ["<all_urls>"]
+}
